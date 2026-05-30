@@ -1,5 +1,6 @@
 import { ShoppingCart, Star } from "lucide-react";
 import useCart from "@/utils/useCart";
+import { toast } from "sonner";
 
 /* size: "normal" | "tall" | "wide" — controls the visual weight in masonry */
 export default function ProductCard({ product, size = "normal" }) {
@@ -125,6 +126,7 @@ export default function ProductCard({ product, size = "normal" }) {
             onClick={(e) => {
               e.preventDefault();
               addItem(product);
+              toast.success(`${product.name} added to cart`);
             }}
             className="group/btn flex items-center gap-1.5 text-[11px] font-bold tracking-[0.15em] uppercase bg-black text-white px-4 py-2.5 hover:bg-[#222] transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
           >

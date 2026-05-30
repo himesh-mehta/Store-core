@@ -20,7 +20,7 @@ export default function CartPage() {
         body: JSON.stringify({ items, redirectURL: window.location.origin, userId: user.id, userEmail: user.email }),
       });
       const { url, error } = await res.json();
-      if (url) window.open(url, "_blank", "popup");
+      if (url) window.location.href = url;
       else toast.error(error || "Checkout failed");
     } catch { toast.error("An error occurred"); }
     finally { setIsCheckingOut(false); }
