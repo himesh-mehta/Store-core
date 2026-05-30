@@ -35,10 +35,22 @@ for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const) {
   };
 }
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-const adapter = NeonAdapter(pool);
+let _adapter: ReturnType<typeof NeonAdapter> | undefined;
+function getAdapter() {
+  if (!_adapter) {
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
+    _adapter = NeonAdapter(pool);
+  }
+  return _adapter;
+}
+
+const adapter = {
+  getUserByEmail: (...args: any[]) => getAdapter().getUserByEmail(...args),
+  createUser: (...args: any[]) => getAdapter().createUser(...args),
+  linkAccount: (...args: any[]) => getAdapter().linkAccount(...args),
+};
 
 const app = new Hono();
 
