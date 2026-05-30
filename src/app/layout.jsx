@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "@auth/create/react";
-import { Toaster } from "sonner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,7 +18,6 @@ export default function RootLayout({ children }) {
       <QueryClientProvider client={queryClient}>
         <div className="min-h-screen bg-white font-inter text-[#111827]">
           {children}
-          <Toaster position="top-right" expand={true} richColors />
         </div>
       </QueryClientProvider>
     </SessionProvider>
