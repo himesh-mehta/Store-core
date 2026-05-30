@@ -276,10 +276,10 @@ export default function LandingPage() {
       {/* ─── STATS BAR ─── */}
       <div className="bg-[#050505] border-t border-b border-[#111]">
         <div className="max-w-7xl mx-auto flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x divide-[#151515]">
-          <Stat n={18} suffix="+" label="Premium Products" />
-          <Stat n={12500} suffix="+" label="Happy Customers" />
-          <Stat n={5400} suffix="+" label="5-Star Reviews" />
-          <Stat n={100} suffix="%" label="Lifetime Satisfaction" />
+          <Stat n={18} suffix="+" label="Curated Products" />
+          <Stat n={12500} suffix="+" label="Active Customers" />
+          <Stat n={2} suffix="-Day" label="Free Express Delivery" />
+          <Stat n={100} suffix="%" label="Satisfaction Guaranteed" />
         </div>
       </div>
 

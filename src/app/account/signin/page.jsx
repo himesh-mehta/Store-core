@@ -12,13 +12,21 @@ export default function SigninPage() {
 
   const handleGoogle = async () => {
     setLoading(true); setError(null);
-    try { await signInWithGoogle(); window.location.href = "/shop"; }
+    try { 
+      await signInWithGoogle(); 
+      const callback = new URLSearchParams(window.location.search).get("callbackUrl") || "/shop";
+      window.location.href = callback; 
+    }
     catch (e) { setError(e?.message || "Google sign in failed."); setLoading(false); }
   };
 
   const onSubmit = async (e) => {
     e.preventDefault(); setLoading(true); setError(null);
-    try { await signInWithCredentials({ email, password }); window.location.href = "/shop"; }
+    try { 
+      await signInWithCredentials({ email, password }); 
+      const callback = new URLSearchParams(window.location.search).get("callbackUrl") || "/shop";
+      window.location.href = callback; 
+    }
     catch (e) {
       const c = e?.code;
       setError(

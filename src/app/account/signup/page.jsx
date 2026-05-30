@@ -13,13 +13,21 @@ export default function SignupPage() {
 
   const handleGoogle = async () => {
     setLoading(true); setError(null);
-    try { await signInWithGoogle(); window.location.href = "/shop"; }
+    try { 
+      await signInWithGoogle(); 
+      const callback = new URLSearchParams(window.location.search).get("callbackUrl") || "/shop";
+      window.location.href = callback; 
+    }
     catch (e) { setError(e?.message || "Google sign up failed."); setLoading(false); }
   };
 
   const onSubmit = async (e) => {
     e.preventDefault(); setLoading(true); setError(null);
-    try { await signUpWithCredentials({ email, password, name }); window.location.href = "/shop"; }
+    try { 
+      await signUpWithCredentials({ email, password, name }); 
+      const callback = new URLSearchParams(window.location.search).get("callbackUrl") || "/shop";
+      window.location.href = callback; 
+    }
     catch (e) {
       const c = e?.code;
       setError(
