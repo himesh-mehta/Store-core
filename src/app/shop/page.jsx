@@ -162,8 +162,7 @@ export default function ShopPage() {
             </button>
           </div>
         ) : (
-          /* ── Premium Asymmetric Grid with Staggered Column Shifts ── */
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-16 pb-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-16 pb-20">
             {sorted.map((product, i) => {
               // Stagger alternating cards on desktop to deliver an expensive floating lookbook feel
               const staggerClass = i % 2 === 1 ? "lg:translate-y-8" : "";

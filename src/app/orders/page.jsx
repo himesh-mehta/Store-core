@@ -49,10 +49,10 @@ export default function OrdersPage() {
     <div className="min-h-screen bg-[#F9FAFB] font-inter">
       <Header />
 
-      <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-4xl px-4 pt-24 pb-12 sm:px-6 lg:px-8">
         <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white border border-[#E5E7EB]">
-            <Package size={20} className="text-[#2563EB]" />
+          <div className="flex h-10 w-10 items-center justify-center bg-white border border-black">
+            <Package size={20} className="text-black" />
           </div>
           <h1 className="text-3xl font-semibold tracking-tight text-[#111827]">
             Order History
@@ -61,12 +61,12 @@ export default function OrdersPage() {
 
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
-            <Loader2 className="animate-spin text-[#2563EB]" />
+            <Loader2 className="animate-spin text-black" />
           </div>
         ) : ordersList.length === 0 ? (
-          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-12 text-center">
+          <div className="border border-[#E5E7EB] bg-white p-12 text-center">
             <ShoppingBag
-              className="mx-auto mb-4 text-[#6B7280] opacity-20"
+              className="mx-auto mb-4 text-black opacity-20"
               size={48}
             />
             <p className="text-lg font-medium text-[#111827]">No orders yet</p>
@@ -75,7 +75,7 @@ export default function OrdersPage() {
             </p>
             <a
               href="/"
-              className="inline-flex rounded-full bg-[#2563EB] px-6 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
+              className="inline-flex bg-black px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 transition-colors uppercase tracking-widest"
             >
               Go to Store
             </a>
@@ -85,7 +85,7 @@ export default function OrdersPage() {
             {ordersList.map((order) => (
               <div
                 key={order.id}
-                className="overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white"
+                className="overflow-hidden border border-[#E5E7EB] bg-white"
               >
                 <div className="border-b border-[#E5E7EB] bg-[#F9FAFB] px-6 py-4 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex gap-8">
@@ -107,9 +107,9 @@ export default function OrdersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                    <span className="inline-flex items-center gap-1.5 border border-[#E5E7EB] bg-white px-2.5 py-0.5 text-xs font-medium text-black uppercase tracking-wider">
                       {getStatusIcon(order.status)}
-                      <span className="capitalize">{order.status}</span>
+                      <span>{order.status}</span>
                     </span>
                     <span className="text-xs font-medium text-[#6B7280]">
                       Order #{order.id}
@@ -123,7 +123,7 @@ export default function OrdersPage() {
                       key={item.id}
                       className="py-4 first:pt-0 last:pb-0 flex items-center gap-4"
                     >
-                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-[#E5E7EB]">
+                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden border border-[#E5E7EB]">
                         <img
                           src={
                             item.image_url || "https://via.placeholder.com/64"
