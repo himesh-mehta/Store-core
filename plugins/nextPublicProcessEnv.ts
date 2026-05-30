@@ -17,6 +17,7 @@ export function nextPublicProcessEnv(): Plugin {
       Object.entries(process.env).filter(([key]) => key.startsWith('NEXT_PUBLIC_'))
     ),
   };
+  console.log('PUBLIC ENV IN VITE BUILD:', JSON.stringify(publicEnv));
 
   const stub = `
 if (typeof window !== 'undefined') {
