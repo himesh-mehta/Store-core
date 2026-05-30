@@ -10,7 +10,7 @@
  * and packages the application using Vercel's Build Output API (v3) in the `.vercel/output` folder.
  */
 
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync, cpSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -141,8 +141,8 @@ function packageForVercel() {
   };
   writeFileSync(resolve(funcDir, '.vc-config.json'), JSON.stringify(vcConfig, null, 2));
 
-  // 5. Write the function entry point index.js
-  console.log('📝 Writing .vercel/output/functions/index.func/index.js...');
+  // 5. Write the temporary function entry point index.js
+  console.log('📝 Writing temporary .vercel/output/functions/index.func/index.js...');
   const entryCode = `import { handle } from 'hono/vercel';
 import app from './build/server/index.js';
 
@@ -150,7 +150,39 @@ export default handle(app);
 `;
   writeFileSync(resolve(funcDir, 'index.js'), entryCode);
 
-  // 6. Write package.json inside functions/index.func to force ES Modules mode
+  // 6. Bundle using esbuild to make the serverless function self-contained and fast
+  console.log('⚡ Bundling serverless function with esbuild...');
+  execSync(
+    'npx esbuild .vercel/output/functions/index.func/index.js --bundle --minify --platform=node --target=node20 --format=esm --outfile=.vercel/output/functions/index.func/index.js --allow-overwrite --external:argon2 --external:fsevents --external:events --external:fs --external:path --external:crypto --external:os --external:http --external:https --external:stream --external:util --external:zlib --external:url --external:net --external:tls --external:dns --external:assert --external:child_process --external:string_decoder --external:timers "--banner:js=import { createRequire } from \'module\'; const require = createRequire(import.meta.url);"',
+    { stdio: 'inherit' }
+  );
+
+  // 7. Clean up the copied build folder inside the function since it is now bundled in index.js
+  console.log('🧹 Cleaning up intermediate build folder inside function...');
+  rmSync(resolve(funcDir, 'build'), { recursive: true, force: true });
+
+  // 8. Copy native node_modules dependencies into the function folder
+  console.log('📁 Copying native dependencies to function node_modules...');
+  const funcNodeModulesDir = resolve(funcDir, 'node_modules');
+  mkdirSync(funcNodeModulesDir, { recursive: true });
+
+  const depsToCopy = ['argon2', '@phc/format', 'node-addon-api', 'node-gyp-build'];
+  for (const dep of depsToCopy) {
+    const srcDepDir = resolve('node_modules', dep);
+    const destDepDir = resolve(funcNodeModulesDir, dep);
+    if (existsSync(srcDepDir)) {
+      mkdirSync(destDepDir, { recursive: true });
+      cpSync(srcDepDir, destDepDir, { recursive: true });
+    }
+  }
+
+  // 9. Write package.json inside functions/index.func to force ES Modules mode and declare external native dependencies
   console.log('📝 Writing .vercel/output/functions/index.func/package.json...');
-  writeFileSync(resolve(funcDir, 'package.json'), JSON.stringify({ type: 'module' }, null, 2));
+  const funcPackageJson = {
+    type: 'module',
+    dependencies: {
+      argon2: '^0.43.0'
+    }
+  };
+  writeFileSync(resolve(funcDir, 'package.json'), JSON.stringify(funcPackageJson, null, 2));
 }
