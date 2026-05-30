@@ -6,16 +6,22 @@
  * mode, this starts a persistent HTTP server via @hono/node-server's `serve()`,
  * preventing the build process from ever exiting.
  * 
- * This wrapper monitors for the build output files and force-exits once they exist,
- * since the actual compilation is complete at that point.
+ * This wrapper monitors for the build output files, force-exits once they exist,
+ * and packages the application using Vercel's Build Output API (v3) in the `.vercel/output` folder.
  */
 
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, rmSync, cpSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const BUILD_SERVER_INDEX = resolve('build/server/index.js');
 const BUILD_CLIENT_DIR = resolve('build/client');
+
+// Clean up stale build folders to prevent the file poller from hitting a false positive
+if (existsSync(resolve('build'))) {
+  console.log('🧹 Cleaning up old build files...');
+  rmSync(resolve('build'), { recursive: true, force: true });
+}
 
 console.log('🔨 Starting react-router build...');
 
@@ -38,9 +44,18 @@ const checker = setInterval(() => {
     buildComplete = true;
     console.log('\n✅ Build output detected. Waiting 5s for any final writes...');
     setTimeout(() => {
-      console.log('✅ Force-exiting build process (server was kept alive by createHonoServer).');
+      console.log('✅ Stopping build process (if running/hanging)...');
       child.kill('SIGTERM');
-      setTimeout(() => process.exit(0), 1000);
+      
+      // Let's package the build using Vercel's Build Output API
+      try {
+        packageForVercel();
+        console.log('🎉 Packaging completed successfully!');
+        process.exit(0);
+      } catch (err) {
+        console.error('❌ Error during Vercel packaging:', err);
+        process.exit(1);
+      }
     }, 5000);
   }
 }, 2000);
@@ -49,8 +64,21 @@ const checker = setInterval(() => {
 child.on('exit', (code) => {
   clearInterval(checker);
   if (!buildComplete) {
-    console.log(`Build process exited with code ${code}`);
-    process.exit(code || 0);
+    if (code === 0) {
+      // Natural success (e.g. on Vercel where process.env.VERCEL is set)
+      buildComplete = true;
+      try {
+        packageForVercel();
+        console.log('🎉 Packaging completed successfully!');
+        process.exit(0);
+      } catch (err) {
+        console.error('❌ Error during Vercel packaging:', err);
+        process.exit(1);
+      }
+    } else {
+      console.log(`Build process exited with code ${code}`);
+      process.exit(code || 0);
+    }
   }
 });
 
@@ -59,3 +87,70 @@ child.on('error', (err) => {
   console.error('Build process error:', err);
   process.exit(1);
 });
+
+function packageForVercel() {
+  console.log('📦 Packaging for Vercel Build Output API...');
+
+  const outputDir = resolve('.vercel/output');
+  
+  // Clean up any existing output directory
+  if (existsSync(outputDir)) {
+    rmSync(outputDir, { recursive: true, force: true });
+  }
+
+  // Create directory structures
+  const staticDir = resolve(outputDir, 'static');
+  const funcDir = resolve(outputDir, 'functions/index.func');
+  
+  mkdirSync(staticDir, { recursive: true });
+  mkdirSync(funcDir, { recursive: true });
+
+  // 1. Copy client-side assets to static directory
+  console.log('📁 Copying static assets to .vercel/output/static...');
+  cpSync(BUILD_CLIENT_DIR, staticDir, { recursive: true });
+
+  // 2. Copy server-side bundle to the serverless function folder
+  console.log('📁 Copying server bundle to .vercel/output/functions/index.func/build/server...');
+  const funcBuildServerDir = resolve(funcDir, 'build/server');
+  mkdirSync(funcBuildServerDir, { recursive: true });
+  cpSync(resolve('build/server'), funcBuildServerDir, { recursive: true });
+
+  // 3. Write Vercel routing configuration
+  console.log('📝 Writing .vercel/output/config.json...');
+  const config = {
+    version: 3,
+    routes: [
+      {
+        handle: 'filesystem'
+      },
+      {
+        src: '/(.*)',
+        dest: '/index'
+      }
+    ]
+  };
+  writeFileSync(resolve(outputDir, 'config.json'), JSON.stringify(config, null, 2));
+
+  // 4. Write function configuration
+  console.log('📝 Writing .vercel/output/functions/index.func/.vc-config.json...');
+  const vcConfig = {
+    runtime: 'nodejs20.x',
+    handler: 'index.js',
+    launcherType: 'Nodejs',
+    shouldAddHelpers: true
+  };
+  writeFileSync(resolve(funcDir, '.vc-config.json'), JSON.stringify(vcConfig, null, 2));
+
+  // 5. Write the function entry point index.js
+  console.log('📝 Writing .vercel/output/functions/index.func/index.js...');
+  const entryCode = `import { handle } from 'hono/vercel';
+import app from './build/server/index.js';
+
+export default handle(app);
+`;
+  writeFileSync(resolve(funcDir, 'index.js'), entryCode);
+
+  // 6. Write package.json inside functions/index.func to force ES Modules mode
+  console.log('📝 Writing .vercel/output/functions/index.func/package.json...');
+  writeFileSync(resolve(funcDir, 'package.json'), JSON.stringify({ type: 'module' }, null, 2));
+}

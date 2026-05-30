@@ -305,7 +305,26 @@ app.use('/api/auth/*', async (c, next) => {
 });
 app.route(API_BASENAME, api);
 
-export default await createHonoServer({
-  app,
-  defaultLogger: false,
-});
+let server;
+if (process.env.VERCEL) {
+  // On Vercel: skip createHonoServer() which starts a persistent HTTP server
+  // that prevents the serverless function from returning a response.
+  // Instead, manually wire up the React Router SSR handler.
+  // Static assets are served by Vercel's CDN from build/client.
+  const build = await import('virtual:react-router/server-build');
+  const { createRequestHandler } = await import('react-router');
+
+  app.use('*', async (c) => {
+    const requestHandler = createRequestHandler(build, 'production');
+    return requestHandler(c.req.raw);
+  });
+
+  server = app;
+} else {
+  server = await createHonoServer({
+    app,
+    defaultLogger: false,
+  });
+}
+
+export default server;

@@ -1,13 +1,4 @@
 {
-  "name": "store-core",
-  "buildCommand": "npm run vercel-build",
-  "outputDirectory": "build/client",
-  "framework": null,
-  "installCommand": "npm install --legacy-peer-deps",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.js"
-    }
-  ]
+  "buildCommand": "node scripts/vercel-build.mjs",
+  "installCommand": "npm install --legacy-peer-deps"
 }
