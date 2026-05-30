@@ -1,0 +1,13 @@
+{
+  "name": "store-core-docs",
+  "version": "1.0.0",
+  "description": "Documentation for StoreCore",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "serve": "vitepress serve"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
+}

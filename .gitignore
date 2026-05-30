@@ -1,8 +1,14 @@
 .DS_Store
-/node_modules/
+node_modules/
 
 # React Router
 /.react-router/
 /build/
 
+# Docs (VitePress)
+docs/.vitepress/dist
+docs/.vitepress/cache
+
+# Environment & Unused Lockfiles
 .env
+bun.lock
