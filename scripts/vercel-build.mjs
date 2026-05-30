@@ -143,10 +143,10 @@ function packageForVercel() {
 
   // 5. Write the temporary function entry point index.js
   console.log('📝 Writing temporary .vercel/output/functions/index.func/index.js...');
-  const entryCode = `import { handle } from 'hono/vercel';
+  const entryCode = `import { getRequestListener } from '@hono/node-server';
 import app from './build/server/index.js';
 
-export default handle(app);
+export default getRequestListener(app.fetch);
 `;
   writeFileSync(resolve(funcDir, 'index.js'), entryCode);
 
