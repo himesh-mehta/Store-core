@@ -7,11 +7,16 @@ import { type Plugin, loadEnv } from 'vite';
  * Server / SSR code is untouched.
  */
 export function nextPublicProcessEnv(): Plugin {
-  const publicEnv = loadEnv(
-    process.env.NODE_ENV ?? 'development',
-    process.cwd(),
-    'NEXT_PUBLIC_',
-  );
+  const publicEnv = {
+    ...loadEnv(
+      process.env.NODE_ENV ?? 'development',
+      process.cwd(),
+      'NEXT_PUBLIC_',
+    ),
+    ...Object.fromEntries(
+      Object.entries(process.env).filter(([key]) => key.startsWith('NEXT_PUBLIC_'))
+    ),
+  };
 
   const stub = `
 if (typeof window !== 'undefined') {

@@ -33,6 +33,7 @@ import { serializeError } from 'serialize-error';
 import { Toaster, toast } from 'sonner';
 // Dev-server overlays and editor integrations stripped out for custom local builds
 import type { Route } from './+types/root';
+import favicon from '../__create/favicon.png';
 
 export const links = () => [];
 
@@ -440,7 +441,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <Meta />
         <Links />
         <script type="module" src="/src/__create/dev-error-overlay.js"></script>
-        <link rel="icon" href="/src/__create/favicon.png" />
+        <link rel="icon" href={favicon} />
         {LoadFontsSSR ? <LoadFontsSSR /> : null}
       </head>
       <body>
