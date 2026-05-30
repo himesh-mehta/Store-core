@@ -7,7 +7,7 @@
 		"build": "react-router build",
 		"start": "react-router-serve ./build/server/index.js",
 		"typecheck": "react-router typegen && tsc --noEmit",
-		"vercel-build": "npm install --legacy-peer-deps && npm run build"
+		"vercel-build": "npm install --legacy-peer-deps && npm run build && mkdir -p build/server/src/app && cp -r src/app/api build/server/src/app/api"
 	},
 	"dependencies": {
 		"@auth/core": "^0.37.2",
