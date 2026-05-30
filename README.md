@@ -2,6 +2,11 @@
 
 Welcome to **StoreCore Essentials**, a state-of-the-art, high-performance, and visually stunning minimalist e-commerce platform built with modern full-stack web technologies. 
 
+[![Live Demo](https://img.shields.io/badge/Demo-Live%20Website-black?style=for-the-badge&logo=vercel)](https://store-core-indol.vercel.app)
+🔗 **Live Demo Link:** [https://store-core-indol.vercel.app](https://store-core-indol.vercel.app)
+
+![StoreCore Showcase Banner](./screenshot.png)
+
 StoreCore features a curated editorial monochrome design system, high-fidelity micro-animations, robust user authentication, and fully secure Stripe payment integrations.
 
 ---
