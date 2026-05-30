@@ -256,6 +256,7 @@ const pool = new Pool({
 const adapter = Adapter(pool);
 
 export const { auth } = CreateAuth({
+  trustHost: true,
   providers: [Credentials({
   id: 'credentials-signin',
   name: 'Credentials Sign in',
