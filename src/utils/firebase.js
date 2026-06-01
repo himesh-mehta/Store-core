@@ -3,10 +3,13 @@ import { getAuth } from "firebase/auth";
 
 // Safe retrieval supporting both SSR (Node.js) and CSR (Vite)
 const getEnvVal = (key) => {
+  const nextPublicKey = key.startsWith("VITE_") ? key.replace("VITE_", "NEXT_PUBLIC_") : `NEXT_PUBLIC_${key}`;
+  const viteKey = key.startsWith("NEXT_PUBLIC_") ? key.replace("NEXT_PUBLIC_", "VITE_") : `VITE_${key}`;
+  
   if (typeof window !== "undefined") {
-    return import.meta.env[key];
+    return import.meta.env[key] || import.meta.env[nextPublicKey] || import.meta.env[viteKey];
   }
-  return process.env[key];
+  return process.env[key] || process.env[nextPublicKey] || process.env[viteKey];
 };
 
 const firebaseConfig = {
