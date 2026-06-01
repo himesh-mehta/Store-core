@@ -1,4 +1,4 @@
-import { kebabCase, startCase, toLower } from 'lodash';
+import { kebabCase, startCase, toLower } from 'lodash-es';
 import type { HtmlTagDescriptor, PluginOption } from 'vite';
 import fs from 'node:fs';
 import fg from 'fast-glob';
