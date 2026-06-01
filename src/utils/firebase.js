@@ -18,19 +18,21 @@ const firebaseConfig = {
   appId: getEnvVal("VITE_FIREBASE_APP_ID"),
 };
 
-// Initialize Firebase only if we have a valid configuration to avoid startup crashes in SSR
 let app;
-let auth;
+let authInstance;
 
 try {
-  if (firebaseConfig.apiKey) {
+  // If we have an API key or are running in the browser (where Vite injects them at build time), initialize Firebase
+  if (firebaseConfig.apiKey || typeof window !== "undefined") {
     app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
+    authInstance = getAuth(app);
   }
 } catch (e) {
-  console.error("Firebase initialization failed during startup:", e);
+  console.error("Firebase initialization failed:", e);
 }
 
-export { auth };
+// Fallback empty auth object to prevent undefined errors during SSR parsing/compilation
+export const auth = authInstance || {};
 export default auth;
+
 
