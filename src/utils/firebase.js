@@ -22,8 +22,7 @@ let app;
 let authInstance;
 
 try {
-  // If we have an API key or are running in the browser (where Vite injects them at build time), initialize Firebase
-  if (firebaseConfig.apiKey || typeof window !== "undefined") {
+  if (firebaseConfig.apiKey) {
     app = initializeApp(firebaseConfig);
     authInstance = getAuth(app);
   }
@@ -31,8 +30,41 @@ try {
   console.error("Firebase initialization failed:", e);
 }
 
-// Fallback empty auth object to prevent undefined errors during SSR parsing/compilation
-export const auth = authInstance || {};
+// Create a dynamic proxy that delegates all property reads directly to the live authInstance if initialized,
+// otherwise falling back to safe mock methods for SSR stability.
+const authProxy = new Proxy({}, {
+  get(target, prop) {
+    if (authInstance) {
+      const val = authInstance[prop];
+      if (typeof val === 'function') {
+        return val.bind(authInstance);
+      }
+      return val;
+    }
+    
+    // Fallback safe implementations for compile/SSR boot phases
+    if (prop === 'onAuthStateChanged') {
+      return (cb) => () => {};
+    }
+    if (prop === 'currentUser') {
+      return null;
+    }
+    if (prop === 'signInWithEmailAndPassword') {
+      return async () => { throw new Error("Authentication not configured"); };
+    }
+    if (prop === 'createUserWithEmailAndPassword') {
+      return async () => { throw new Error("Authentication not configured"); };
+    }
+    if (prop === 'signOut') {
+      return async () => {};
+    }
+    return undefined;
+  }
+});
+
+export const auth = authProxy;
 export default auth;
+
+
 
 

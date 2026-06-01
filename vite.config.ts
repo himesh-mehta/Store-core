@@ -17,8 +17,8 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
-  // Keep them available via import.meta.env.NEXT_PUBLIC_*
-  envPrefix: 'NEXT_PUBLIC_',
+  // Keep them available via import.meta.env.*
+  envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
   optimizeDeps: {
     // Explicitly include fast-glob, since it gets dynamically imported and we
     // don't want that to cause a re-bundle.
