@@ -11,10 +11,10 @@ export function nextPublicProcessEnv(): Plugin {
     ...loadEnv(
       process.env.NODE_ENV ?? 'development',
       process.cwd(),
-      'NEXT_PUBLIC_',
+      ['NEXT_PUBLIC_', 'VITE_'],
     ),
     ...Object.fromEntries(
-      Object.entries(process.env).filter(([key]) => key.startsWith('NEXT_PUBLIC_'))
+      Object.entries(process.env).filter(([key]) => key.startsWith('NEXT_PUBLIC_') || key.startsWith('VITE_'))
     ),
   };
   console.log('PUBLIC ENV IN VITE BUILD:', JSON.stringify(publicEnv));

@@ -1,15 +1,70 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
-const firebaseConfig = {
-  apiKey: import.meta.env.NEXT_PUBLIC_FIREBASE_API_KEY || "dummy-api-key",
-  authDomain: import.meta.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "dummy-auth-domain.firebaseapp.com",
-  projectId: import.meta.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "dummy-project-id",
-  storageBucket: import.meta.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "dummy-storage-bucket.appspot.com",
-  messagingSenderId: import.meta.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "dummy-messaging-sender-id",
-  appId: import.meta.env.NEXT_PUBLIC_FIREBASE_APP_ID || "dummy-app-id",
+// Safe retrieval supporting both SSR (Node.js) and CSR (Vite)
+const getEnvVal = (key) => {
+  if (typeof window !== "undefined") {
+    return import.meta.env[key];
+  }
+  return process.env[key];
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+const firebaseConfig = {
+  apiKey: getEnvVal("VITE_FIREBASE_API_KEY"),
+  authDomain: getEnvVal("VITE_FIREBASE_AUTH_DOMAIN"),
+  projectId: getEnvVal("VITE_FIREBASE_PROJECT_ID"),
+  storageBucket: getEnvVal("VITE_FIREBASE_STORAGE_BUCKET"),
+  messagingSenderId: getEnvVal("VITE_FIREBASE_MESSAGING_SENDER_ID"),
+  appId: getEnvVal("VITE_FIREBASE_APP_ID"),
+};
+
+let app;
+let authInstance;
+
+try {
+  if (firebaseConfig.apiKey) {
+    app = initializeApp(firebaseConfig);
+    authInstance = getAuth(app);
+  }
+} catch (e) {
+  console.error("Firebase initialization failed:", e);
+}
+
+// Create a dynamic proxy that delegates all property reads directly to the live authInstance if initialized,
+// otherwise falling back to safe mock methods for SSR stability.
+const authProxy = new Proxy({}, {
+  get(target, prop) {
+    if (authInstance) {
+      const val = authInstance[prop];
+      if (typeof val === 'function') {
+        return val.bind(authInstance);
+      }
+      return val;
+    }
+    
+    // Fallback safe implementations for compile/SSR boot phases
+    if (prop === 'onAuthStateChanged') {
+      return (cb) => () => {};
+    }
+    if (prop === 'currentUser') {
+      return null;
+    }
+    if (prop === 'signInWithEmailAndPassword') {
+      return async () => { throw new Error("Authentication not configured"); };
+    }
+    if (prop === 'createUserWithEmailAndPassword') {
+      return async () => { throw new Error("Authentication not configured"); };
+    }
+    if (prop === 'signOut') {
+      return async () => {};
+    }
+    return undefined;
+  }
+});
+
+export const auth = authProxy;
 export default auth;
+
+
+
+
