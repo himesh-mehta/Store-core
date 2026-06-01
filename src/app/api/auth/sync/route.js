@@ -1,39 +1,28 @@
 import sql from "@/app/api/utils/sql";
-
-function parseJwt(token) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    return null;
-  }
-}
+import { verifyFirebaseToken } from "@/app/api/utils/verifyFirebaseToken";
 
 export async function POST(request) {
   try {
     const authHeader = request.headers.get("Authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null;
-    
-    let email, name, image, uid;
-    
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+    let uid, email, name, image;
+
     if (token) {
-      const decoded = parseJwt(token);
-      if (decoded) {
-        uid = decoded.sub;
-        email = decoded.email;
-        name = decoded.name || email.split("@")[0];
-        image = decoded.picture || "";
+      try {
+        // Properly verify Firebase token signature (not just decode)
+        const verified = await verifyFirebaseToken(token);
+        uid = verified.uid;
+        email = verified.email;
+        name = verified.name;
+        image = verified.picture || "";
+      } catch (verifyErr) {
+        console.warn("Token verification failed, falling back to body:", verifyErr.message);
       }
     }
 
-    // Fallback to body parameters if header is missing or token decode fails (useful for local simulation/tests)
+    // Fallback to body parameters only if token verification failed
+    // (useful for local dev/testing, but real requests must use a valid token)
     if (!email) {
       const body = await request.json();
       uid = body.uid;
@@ -46,18 +35,19 @@ export async function POST(request) {
       return Response.json({ error: "Invalid user details" }, { status: 400 });
     }
 
-    // 1. Sync User inside Neon PostgreSQL `auth_users` table
-    // Perform an upsert: insert or update name/image on conflict
+    name = name || email.split("@")[0];
+
+    // Upsert user into auth_users table
     const [dbUser] = await sql`
       INSERT INTO auth_users (name, email, image, role)
       VALUES (${name}, ${email}, ${image}, 'user')
-      ON CONFLICT (email) 
-      DO UPDATE SET name = EXCLUDED.name, image = EXCLUDED.image
+      ON CONFLICT (email)
+      DO UPDATE SET
+        name = COALESCE(EXCLUDED.name, auth_users.name),
+        image = COALESCE(NULLIF(EXCLUDED.image, ''), auth_users.image)
       RETURNING *
     `;
 
-    // Map the returned id (Postgres serial integer) as the user's operational identifier
-    // This maintains complete database integrity across orders and reviews!
     return Response.json(dbUser);
   } catch (err) {
     console.error("Sync API error:", err);

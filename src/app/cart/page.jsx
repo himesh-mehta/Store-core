@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import { Toaster, toast } from "sonner";
 import { useState } from "react";
 import useUser from "@/utils/useUser";
+import { auth } from "@/utils/firebase";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotal } = useCart();
@@ -14,20 +15,32 @@ export default function CartPage() {
     if (!user) { window.location.href = "/account/signin?callbackUrl=/cart"; return; }
     setIsCheckingOut(true);
     try {
+      // Get a fresh Firebase ID token to authenticate the checkout request
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser) {
+        window.location.href = "/account/signin?callbackUrl=/cart";
+        return;
+      }
+      const idToken = await firebaseUser.getIdToken();
+
       const res = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items, redirectURL: window.location.origin, userId: user.id, userEmail: user.email }),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ items, redirectURL: window.location.origin }),
       });
       const { url, error } = await res.json();
       if (url) window.location.href = url;
       else toast.error(error || "Checkout failed");
-    } catch { toast.error("An error occurred"); }
+    } catch { toast.error("An error occurred during checkout"); }
     finally { setIsCheckingOut(false); }
   };
 
   const subtotal = getTotal();
-  const tax = subtotal * 0.07;
+  const GST_RATE = 0.18;
+  const tax = subtotal * GST_RATE;
   const total = subtotal + tax;
   const qty = items.reduce((s, i) => s + i.quantity, 0);
 
@@ -166,7 +179,7 @@ export default function CartPage() {
                 <span className="font-bold text-emerald-600">Free</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#888]">GST (7%)</span>
+                <span className="text-[#888]">GST (18%)</span>
                 <span className="font-bold tabular-nums">₹{tax.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             </div>
